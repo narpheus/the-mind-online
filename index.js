@@ -31,22 +31,24 @@ function updateResources() {
 }
 
 function applyRewards() {
+  // 레벨 클리어 후 다음 레벨 시작할 때 주는 보상 맵 (다음 레벨 숫자 기준)
   const rewardMap = {
-    2: 'shuriken',
-    3: 'life',
-    5: 'shuriken',
-    6: 'life',
-    8: 'shuriken',
-    9: 'life',
+    3: 'shuriken', // 2레벨 통과 후 3레벨 시작 시 수리검 +1
+    4: 'life',     // 3레벨 통과 후 4레벨 시작 시 생명 +1
+    6: 'shuriken', // 5레벨 통과 후 6레벨 시작 시 수리검 +1
+    7: 'life',     // 6레벨 통과 후 7레벨 시작 시 생명 +1
+    9: 'shuriken', // 8레벨 통과 후 9레벨 시작 시 수리검 +1
+    10: 'life',    // 9레벨 통과 후 10레벨 시작 시 생명 +1
   };
+
   const reward = rewardMap[level];
   if (reward === 'life') {
     lives++;
-    io.emit('status', `🎉 레벨 ${level} 통과! 생명 +1 획득!`);
+    io.emit('status', `🎉 레벨 ${level} 시작! 생명 +1 획득!`);
   }
   if (reward === 'shuriken') {
     shuriken++;
-    io.emit('status', `🎉 레벨 ${level} 통과! 수리검 +1 획득!`);
+    io.emit('status', `🎉 레벨 ${level} 시작! 수리검 +1 획득!`);
   }
   updateResources();
 }
