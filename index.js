@@ -5,19 +5,26 @@ const io = require('socket.io')(http);
 
 app.use(express.static('.'));
 
-let players = [];
+let players = []; // {id, name}
 let hands = {};
 let lives = 3;
 let shuriken = 1;
+let level = 1;
 let lastPlayed = 0;
 
 io.on('connection', (socket) => {
   console.log('접속됨:', socket.id);
-  players.push(socket.id);
+
+  socket.on('join', (name) => {
+    players.push({ id: socket.id, name });
+    io.emit('playerList', players);
+    console.log('플레이어 참가:', name);
+  });
 
   socket.on('disconnect', () => {
-    players = players.filter(id => id !== socket.id);
+    players = players.filter(p => p.id !== socket.id);
     delete hands[socket.id];
+    io.emit('playerList', players);
     console.log('퇴장:', socket.id);
   });
 
@@ -27,15 +34,16 @@ io.on('connection', (socket) => {
 
     lives = 3;
     shuriken = 1;
+    level = 1;
     lastPlayed = 0;
 
     hands = {};
-    players.forEach(id => {
-      hands[id] = [deck.pop()];
-      io.to(id).emit('hand', hands[id]);
+    players.forEach(p => {
+      hands[p.id] = [deck.pop()];
+      io.to(p.id).emit('hand', hands[p.id]);
     });
 
-    io.emit('update-resources', { lives, shuriken });
+    io.emit('update-resources', { lives, shuriken, level });
   });
 
   socket.on('play', (card) => {
@@ -46,8 +54,9 @@ io.on('connection', (socket) => {
       lastPlayed = card;
     }
 
-    io.emit('played', { by: socket.id.slice(0, 5), card });
-    io.emit('update-resources', { lives, shuriken });
+    const player = players.find(p => p.id === socket.id);
+    io.emit('played', { by: player ? player.name : socket.id.slice(0,5), card });
+    io.emit('update-resources', { lives, shuriken, level });
   });
 
   socket.on('use-shuriken', () => {
@@ -55,9 +64,9 @@ io.on('connection', (socket) => {
     shuriken -= 1;
 
     let minCards = [];
-    players.forEach(id => {
-      if (hands[id] && hands[id].length > 0) {
-        minCards.push({ id, card: Math.min(...hands[id]) });
+    players.forEach(p => {
+      if (hands[p.id] && hands[p.id].length > 0) {
+        minCards.push({ id: p.id, card: Math.min(...hands[p.id]) });
       }
     });
 
@@ -71,13 +80,13 @@ io.on('connection', (socket) => {
     }
 
     io.emit('shuriken-used', globalMin);
-    io.emit('update-resources', { lives, shuriken });
+    io.emit('update-resources', { lives, shuriken, level });
   });
 });
 
 function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+  for (let i = arr.length -1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i+1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
 }
