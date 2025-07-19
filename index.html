@@ -1,83 +1,54 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <title>The Mind - Online</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      margin: 20px;
-    }
-    #playerList, #resources, #status {
-      text-align: center;
-      margin: 10px 0;
-    }
-
-    /* 카드 컨테이너: 가로 정렬 + 줄바꿈 */
-    #cards, #playedCards {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 20px;
-    }
-
-    /* 카드 디자인 */
-    .card {
-      width: 50px;
-      height: 70px;
-      border: 1px solid #333;
-      line-height: 70px;
-      font-size: 18px;
-      background-color: #eee;
-      cursor: pointer;
-      user-select: none;
-      border-radius: 6px;
-      box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
-      transition: background-color 0.2s ease;
-    }
-    .card:hover {
-      background-color: #ddd;
-    }
-
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    @media (max-width: 400px) {
-      .card {
-        width: 40px;
-        height: 60px;
-        font-size: 16px;
-        line-height: 60px;
-      }
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Mind Online</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>The Mind - Online</h1>
-
-  <div>
-    <label for="username">이름:</label>
-    <input id="username" placeholder="이름을 입력하세요" />
-    <button onclick="joinGame()">참가</button>
+  <div id="login">
+    <input id="nameInput" placeholder="닉네임 입력" />
+    <button id="joinBtn">입장</button>
   </div>
 
-  <button onclick="startGame()" disabled id="startBtn">게임 시작</button>
-  <button onclick="useShuriken()" disabled id="shurikenBtn">수리검 사용</button>
-  <button onclick="nextLevel()" style="display:none;" id="nextLevelBtn">다음 레벨</button>
+  <div id="game" style="display:none;">
+    <div id="top">
+      <h2>🧠 The Mind Online</h2>
+      <div id="resources">
+        ❤️ <span id="lives">0</span>
+        🥷 <span id="shuriken">0</span>
+        📈 <span id="level">1</span>
+      </div>
+    </div>
 
-  <div id="playerList"></div>
-  <div id="resources"></div>
+    <div id="players"></div>
 
-  <h3>내 카드</h3>
-  <div id="cards"></div>
+    <div id="playedCards" class="card-container"></div>
 
-  <h3>깔린 카드</h3>
-  <div id="playedCards"></div>
+    <div id="handContainer" class="card-container"></div>
 
-  <div id="status"></div>
+    <div id="controls">
+      <button id="startBtn">게임 시작</button>
+      <button id="nextLevelBtn" style="display:none;">다음 레벨 ▶️</button>
+      <button id="useShurikenBtn">수리검 사용</button>
+      <div id="shurikenVote" style="display:none;">
+        수리검 사용할까요?
+        <button id="voteYes">✅</button>
+        <button id="voteNo">❌</button>
+      </div>
+      <div id="emojiBtns">
+        <button class="emoji">😱</button>
+        <button class="emoji">👏</button>
+        <button class="emoji">😢</button>
+        <button class="emoji">😡</button>
+      </div>
+    </div>
+
+    <p id="status"></p>
+    <div id="shurikenReveal" class="card-container"></div>
+    <h1 id="resultMessage"></h1>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="script.js"></script>
