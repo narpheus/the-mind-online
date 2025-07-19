@@ -1,8 +1,11 @@
+// script.js
 const socket = io();
 
 let hand = [];
 let played = [];
 let playerName = null;
+let shurikenVotes = new Set();
+let allPlayers = [];
 
 function joinGame() {
   const input = document.getElementById('username');
@@ -16,7 +19,7 @@ function joinGame() {
   document.getElementById('startBtn').disabled = false;
   document.getElementById('shurikenBtn').disabled = false;
   input.disabled = true;
-  input.nextElementSibling.disabled = true; // 참가 버튼 비활성화
+  input.nextElementSibling.disabled = true;
 }
 
 function startGame() {
@@ -25,8 +28,8 @@ function startGame() {
   document.getElementById('nextLevelBtn').style.display = 'none';
 }
 
-function useShuriken() {
-  socket.emit('use-shuriken');
+function requestShuriken() {
+  socket.emit('request-shuriken');
 }
 
 function nextLevel() {
@@ -36,6 +39,7 @@ function nextLevel() {
 }
 
 socket.on('playerList', (players) => {
+  allPlayers = players;
   const container = document.getElementById('playerList');
   container.innerHTML = '<b>플레이어들:</b> ' + players.map(p => p.name).join(', ');
 });
@@ -50,6 +54,7 @@ socket.on('hand', (cards) => {
 function renderCards() {
   const container = document.getElementById('cards');
   container.innerHTML = '';
+  hand.sort((a, b) => a - b);
   hand.forEach((card) => {
     const div = document.createElement('div');
     div.className = 'card';
@@ -63,7 +68,6 @@ function renderCards() {
   });
 }
 
-// 플레이된 카드 오름차순 정렬 후 다시 렌더링
 function renderPlayedCards() {
   const playedContainer = document.getElementById('playedCards');
   playedContainer.innerHTML = '';
@@ -86,12 +90,14 @@ socket.on('update-resources', ({ lives, shuriken, level }) => {
   document.getElementById('resources').innerText = `❤️ 생명: ${lives}  |  🥷 수리검: ${shuriken}  |  🎯 레벨: ${level}`;
 });
 
-socket.on('shuriken-used', (minCard) => {
-  alert(`🥷 수리검 사용됨! 가장 작은 카드 ${minCard}가 공개됩니다.`);
-
-  // 수리검 사용 시 깔린 카드에 추가하고 정렬
-  played.push(minCard);
+socket.on('shuriken-used', (minCards) => {
+  minCards.forEach(card => {
+    played.push(card);
+  });
   renderPlayedCards();
+  hand = hand.filter(c => !minCards.includes(c));
+  renderCards();
+  document.getElementById('status').innerText = '🥷 수리검이 사용되어 가장 작은 카드들이 공개되었습니다!';
 });
 
 socket.on('life-lost', () => {
@@ -101,5 +107,15 @@ socket.on('life-lost', () => {
 socket.on('game-over', (msg) => {
   alert(msg);
   document.getElementById('status').innerText = msg;
+  document.getElementById('nextLevelBtn').style.display = 'inline-block';
+});
+
+socket.on('shuriken-requested', (voters) => {
+  document.getElementById('status').innerText = `🥷 수리검 요청 중... (${voters.length}/${allPlayers.length} 동의)`;
+});
+
+socket.on('game-won', () => {
+  alert('🎉 모든 레벨을 통과했습니다! 당신은 신이 되었습니다!');
+  document.getElementById('status').innerText = '🎉 모든 레벨을 통과했습니다! 당신은 신이 되었습니다!';
   document.getElementById('nextLevelBtn').style.display = 'inline-block';
 });
