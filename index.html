@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>The Mind - Online</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; }
+    #cards { display: flex; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+    .card { width: 80px; height: 120px; border: 1px solid #333; margin: 10px; line-height: 120px; font-size: 24px; cursor: pointer; background-color: #eee; }
+    #status { margin-top: 30px; font-size: 20px; }
+    #resources { margin-top: 20px; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>The Mind - Online</h1>
+  <button onclick="startGame()">Start Game</button>
+  <button onclick="useShuriken()">Use Shuriken</button>
+  <div id="resources"></div>
+  <div id="cards"></div>
+  <div id="status"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
