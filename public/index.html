@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>The Mind Online</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -13,40 +13,41 @@
   </div>
 
   <div id="game" style="display:none;">
-    <div id="top">
-      <h2>🧠 The Mind Online</h2>
-      <div id="resources">
-        ❤️ <span id="lives">0</span>
-        🥷 <span id="shuriken">0</span>
-        📈 <span id="level">1</span>
-      </div>
+    <h1>🧠 The Mind Online</h1>
+
+    <div id="resources">
+      ❤️ <span id="lives">0</span>
+      🥷 <span id="shuriken">0</span>
+      📈 <span id="level">1</span>
     </div>
 
     <div id="players"></div>
 
-    <div id="playedCards" class="card-container"></div>
+    <div id="playedCards"></div>
 
-    <div id="handContainer" class="card-container"></div>
+    <div id="handContainer"></div>
 
     <div id="controls">
       <button id="startBtn">게임 시작</button>
       <button id="nextLevelBtn" style="display:none;">다음 레벨 ▶️</button>
       <button id="useShurikenBtn">수리검 사용</button>
-      <div id="shurikenVote" style="display:none;">
-        수리검 사용할까요?
-        <button id="voteYes">✅</button>
-        <button id="voteNo">❌</button>
-      </div>
-      <div id="emojiBtns">
-        <button class="emoji">😱</button>
-        <button class="emoji">👏</button>
-        <button class="emoji">😢</button>
-        <button class="emoji">😡</button>
-      </div>
+    </div>
+
+    <div id="shurikenVote" style="display:none;">
+      수리검 사용할까요? 
+      <button id="voteYes">✅</button> 
+      <button id="voteNo">❌</button>
+    </div>
+
+    <div id="emojiBtns">
+      <button class="emoji">😱</button>
+      <button class="emoji">👏</button>
+      <button class="emoji">😢</button>
+      <button class="emoji">😡</button>
     </div>
 
     <p id="status"></p>
-    <div id="shurikenReveal" class="card-container"></div>
+    <div id="shurikenReveal"></div>
     <h1 id="resultMessage"></h1>
   </div>
 
