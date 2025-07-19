@@ -28,19 +28,23 @@ function shuffle(arr) {
 
 function updateResources() {
   io.emit('update-resources', { lives, shuriken, level });
+  updatePlayerCardCounts();
+}
+
+function updatePlayerCardCounts() {
+  const playerCounts = players.map(p => ({ name: p.name, count: (hands[p.id] || []).length }));
+  io.emit('player-card-counts', playerCounts);
 }
 
 function applyRewards() {
-  // 레벨 클리어 후 다음 레벨 시작할 때 주는 보상 맵 (다음 레벨 숫자 기준)
   const rewardMap = {
-    3: 'shuriken', // 2레벨 통과 후 3레벨 시작 시 수리검 +1
-    4: 'life',     // 3레벨 통과 후 4레벨 시작 시 생명 +1
-    6: 'shuriken', // 5레벨 통과 후 6레벨 시작 시 수리검 +1
-    7: 'life',     // 6레벨 통과 후 7레벨 시작 시 생명 +1
-    9: 'shuriken', // 8레벨 통과 후 9레벨 시작 시 수리검 +1
-    10: 'life',    // 9레벨 통과 후 10레벨 시작 시 생명 +1
+    3: 'shuriken',
+    4: 'life',
+    6: 'shuriken',
+    7: 'life',
+    9: 'shuriken',
+    10: 'life'
   };
-
   const reward = rewardMap[level];
   if (reward === 'life') {
     lives++;
@@ -64,6 +68,18 @@ function resetNextLevelVotes() {
   io.emit('next-level-status', { count: 0, total: players.length });
 }
 
+function resetGameState() {
+  hands = {};
+  level = 1;
+  shuriken = 1;
+  lastPlayed = 0;
+  shurikenVotes.clear();
+  nextLevelVotes.clear();
+  levelClearPending = false;
+  lives = players.length;
+  updateResources();
+}
+
 io.on('connection', (socket) => {
   console.log('접속됨:', socket.id);
 
@@ -74,7 +90,6 @@ io.on('connection', (socket) => {
     lives = players.length;
     io.emit('playerList', players);
     updateResources();
-    console.log('플레이어 참가:', name);
   });
 
   socket.on('disconnect', () => {
@@ -84,13 +99,12 @@ io.on('connection', (socket) => {
     nextLevelVotes.delete(socket.id);
     io.emit('playerList', players);
     updateResources();
-    console.log('퇴장:', socket.id);
   });
 
   socket.on('start', () => {
-    if(levelClearPending) {
+    if (levelClearPending) {
       socket.emit('status', '레벨 클리어 대기 중입니다. 잠시만 기다려주세요.');
-      return; // 레벨 클리어 대기중이면 시작 못함
+      return;
     }
 
     const deck = createDeck();
@@ -123,6 +137,7 @@ io.on('connection', (socket) => {
       io.emit('life-lost');
       if (lives <= 0) {
         io.emit('game-over', '💀 생명이 모두 소진되었습니다. 신이 되지 못했습니다!');
+        resetGameState();
         return;
       }
     } else {
@@ -176,7 +191,6 @@ io.on('connection', (socket) => {
       io.emit('shuriken-used', revealedCards);
       updateResources();
 
-      // 수리검으로 모든 카드가 깔렸으면 레벨 클리어 처리
       const allCardsEmpty = Object.values(hands).every(cards => cards.length === 0);
       if (allCardsEmpty) {
         if (checkGameClear()) {
