@@ -1,189 +1,49 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>The Mind Online</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: #fff;
-      color: #222;
-      text-align: center;
-    }
-    h2 {
-      margin-top: 25px;
-      font-weight: 700;
-      font-size: 1.3rem;
-      color: #444;
-    }
-    .card-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-      max-width: 400px;
-      margin: 10px auto;
-    }
-    .card {
-      background: #f0f0f0;
-      color: #222;
-      border-radius: 24px;
-      padding: 24px 18px;
-      font-weight: 700;
-      font-size: 2.0rem;
-      cursor: pointer;
-      min-width: 60px;
-      min-height: 90px;
-      line-height: 1;
-      text-align: center;
-      box-shadow: 1px 2px 5px rgba(0,0,0,0.15);
-      user-select: none;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .card:hover {
-      background: #e0e0e0;
-      transform: scale(1.1);
-      box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
-    }
-    #handContainer .card {
-      border: 3px solid #007bff;
-    }
-    #playedCards .card {
-      opacity: 0.9;
-    }
-    #shurikenReveal .card {
-      border: 3px dashed #ff6600;
-      background: #fff7e6;
-    }
-    button {
-      padding: 10px 18px;
-      font-size: 1.1rem;
-      border: none;
-      border-radius: 6px;
-      background: #007bff;
-      color: white;
-      cursor: pointer;
-      transition: background 0.3s ease;
-      margin: 5px;
-      user-select: none;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    #resources {
-      margin-bottom: 15px;
-      font-size: 1.4rem;
-    }
-    #players {
-      margin: 15px 0;
-      font-weight: 600;
-      font-size: 1.1rem;
-      color: #444;
-    }
-    #controls {
-      margin: 20px 0;
-    }
-    #shurikenVote {
-      margin: 15px 0;
-      font-size: 1.1rem;
-      color: #333;
-    }
-    #emojiBtns {
-      margin-top: 20px;
-    }
-    #emojiBtns button {
-      background: transparent;
-      border: none;
-      font-size: 1.8rem;
-      cursor: pointer;
-      margin: 0 6px;
-    }
-    #status {
-      margin-top: 15px;
-      font-size: 1.1rem;
-      min-height: 24px;
-      color: #444;
-    }
-    #resultMessage {
-      margin-top: 20px;
-      font-size: 2rem;
-      color: #e67e22;
-      font-weight: 900;
-    }
-    @media (max-width: 420px) {
-      .card-container {
-        max-width: 100%;
-        gap: 8px;
-      }
-      .card {
-        min-width: 48px;
-        min-height: 72px;
-        padding: 18px 12px;
-        font-size: 1.6rem;
-      }
-      input#nameInput {
-        width: 140px;
-        font-size: 1rem;
-      }
-      button {
-        font-size: 1rem;
-        padding: 8px 14px;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>더 마인드 온라인</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="login">
-    <input id="nameInput" placeholder="닉네임 입력" />
-    <button id="joinBtn">입장</button>
-  </div>
-
-  <div id="game" style="display:none;">
-    <h1>🧠 The Mind Online</h1>
-
-    <div id="resources">
-      ❤️ <span id="lives">0</span>
-      🥷 <span id="shuriken">0</span>
-      📈 <span id="level">1</span>
+  <div id="container">
+    <h1>더 마인드 온라인</h1>
+    <div id="loginDiv">
+      <input type="text" id="nameInput" placeholder="닉네임 입력" />
+      <button id="joinBtn">게임 참가</button>
     </div>
 
-    <div id="players"></div>
+    <div id="gameDiv" style="display:none;">
+      <div id="playersList"></div>
+      <div id="status"></div>
 
-    <h2>깔린 카드</h2>
-    <div id="playedCards" class="card-container"></div>
+      <div id="gameInfo">
+        <div>레벨: <span id="levelDisplay">1</span></div>
+        <div>생명: <span id="livesDisplay">0</span></div>
+        <div>수리검: <span id="shurikenDisplay">0</span></div>
+      </div>
 
-    <h2>내 손 카드</h2>
-    <div id="handContainer" class="card-container"></div>
+      <div>
+        <button id="startBtn">게임 시작</button>
+        <button id="nextLevelBtn" disabled>다음 레벨</button>
+        <button id="shurikenBtn">수리검 사용</button>
+      </div>
 
-    <div id="shurikenReveal" class="card-container"></div>
+      <div id="yourCards" class="cardsContainer"></div>
+      <div id="playedCards" class="cardsContainer"></div>
 
-    <div id="controls">
-      <button id="startBtn">게임 시작</button>
-      <button id="nextLevelBtn" style="display:none;">다음 레벨 ▶️</button>
-      <button id="useShurikenBtn">수리검 사용</button>
+      <div id="shurikenVoteDiv" style="display:none;">
+        <p>수리검 사용 동의하시겠습니까?</p>
+        <button id="acceptShurikenBtn">동의</button>
+        <button id="rejectShurikenBtn">거절</button>
+      </div>
+
+      <div id="emotionsDiv">
+        <button data-emotion="wow">대박 👍</button>
+        <button data-emotion="sad">아쉽다 😢</button>
+      </div>
     </div>
-
-    <div id="shurikenVote" style="display:none;">
-      수리검 사용할까요? 
-      <button id="voteYes">✅</button> 
-      <button id="voteNo">❌</button>
-    </div>
-
-    <div id="emojiBtns">
-      <button class="emoji">😱</button>
-      <button class="emoji">👏</button>
-      <button class="emoji">😢</button>
-      <button class="emoji">😡</button>
-    </div>
-
-    <p id="status"></p>
-    <h1 id="resultMessage"></h1>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
