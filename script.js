@@ -22,10 +22,17 @@ function joinGame() {
 function startGame() {
   socket.emit('start');
   document.getElementById('status').innerText = '게임을 시작했습니다!';
+  document.getElementById('nextLevelBtn').style.display = 'none';
 }
 
 function useShuriken() {
   socket.emit('use-shuriken');
+}
+
+function nextLevel() {
+  socket.emit('next-level');
+  document.getElementById('nextLevelBtn').style.display = 'none';
+  document.getElementById('status').innerText = '다음 레벨로 이동합니다...';
 }
 
 socket.on('playerList', (players) => {
@@ -35,7 +42,9 @@ socket.on('playerList', (players) => {
 
 socket.on('hand', (cards) => {
   hand = cards;
+  played = [];
   renderCards();
+  document.getElementById('playedCards').innerHTML = '';
 });
 
 function renderCards() {
@@ -58,7 +67,6 @@ socket.on('played', (data) => {
   played.push(data.card);
   document.getElementById('status').innerText = `${data.by}님이 ${data.card} 카드를 냈습니다.`;
 
-  // 깔린 카드 표시
   const playedContainer = document.getElementById('playedCards');
   const cardDiv = document.createElement('div');
   cardDiv.className = 'card';
@@ -76,4 +84,10 @@ socket.on('shuriken-used', (minCard) => {
 
 socket.on('life-lost', () => {
   alert('틀린 순서! 💔 생명이 1개 줄었습니다.');
+});
+
+socket.on('game-over', (msg) => {
+  alert(msg);
+  document.getElementById('status').innerText = msg;
+  document.getElementById('nextLevelBtn').style.display = 'inline-block';
 });
