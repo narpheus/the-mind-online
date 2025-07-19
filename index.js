@@ -15,7 +15,6 @@ let gameData = {
   shuriken: 0,
   playerCards: {},  // { socketId: [cards] }
   playedCards: [],  // { playerId, card }
-  readyForNextLevel: [],
   shurikenVotes: {}, // { socketId: 'accept'/'reject' }
 };
 
@@ -29,7 +28,6 @@ function resetGameData() {
     shuriken: 0,
     playerCards: {},
     playedCards: [],
-    readyForNextLevel: [],
     shurikenVotes: {},
   };
 }
@@ -77,7 +75,6 @@ function dealCards() {
     gameData.playerCards[p.id].sort((a,b) => a-b);
   }
   gameData.playedCards = [];
-  gameData.readyForNextLevel = [];
   gameData.shurikenVotes = {};
 }
 
@@ -99,25 +96,8 @@ function checkGameClear() {
   return false;
 }
 
-function resetPlayerReady() {
-  gameData.readyForNextLevel = [];
-}
-
 function resetShurikenVotes() {
   gameData.shurikenVotes = {};
-}
-
-function allPlayersReady() {
-  return gameData.readyForNextLevel.length === players.length;
-}
-
-function allShurikenVoteAccepted() {
-  if (Object.keys(gameData.shurikenVotes).length !== players.length) return false;
-  return Object.values(gameData.shurikenVotes).every(v => v === 'accept');
-}
-
-function allShurikenVoteDecided() {
-  return Object.keys(gameData.shurikenVotes).length === players.length;
 }
 
 io.on('connection', (socket) => {
@@ -166,40 +146,61 @@ io.on('connection', (socket) => {
       socket.emit('status', '내 카드에 없는 숫자입니다.');
       return;
     }
+
+    // 카드 제거
     gameData.playerCards[socket.id] = gameData.playerCards[socket.id].filter(c => c !== card);
     gameData.playedCards.push({playerId: socket.id, card});
     io.emit('cardPlayed', {playerId: socket.id, card});
     resetShurikenVotes();
 
-    let allEmpty = players.every(p => gameData.playerCards[p.id].length === 0);
-    if (allEmpty) {
-      io.emit('status', '레벨 완료! 다음 레벨로 진행하세요.');
+    // 실패 조건 체크
+    const playedNumbers = gameData.playedCards.map(p => p.card).sort((a,b)=>a-b);
+    const minCard = playedNumbers[0];
+    for (const p of players) {
+      const playerCards = gameData.playerCards[p.id];
+      if (playerCards.length > 0 && playerCards[0] < minCard) {
+        // 실패! 내 카드보다 더 작은 카드가 아직 있음
+        gameData.lives--;
+        io.emit('status', `실패! 생명이 1 감소했습니다. 남은 생명: ${gameData.lives}`);
+        if (gameData.lives <= 0) {
+          io.emit('gameOver', '생명이 모두 소진되었습니다. 신이 되지 못했습니다...');
+          gameData.started = false;
+          resetGameData();
+          io.emit('gameReset');
+          return;
+        } else {
+          // 실패 시 깔린 카드도 초기화하고 다시 같은 레벨 카드 분배
+          dealCards();
+          io.emit('gameStarted', gameData);
+          return;
+        }
+      }
     }
-  });
 
-  socket.on('nextLevel', () => {
-    if (!gameData.started) {
-      socket.emit('status', '게임이 시작되지 않았습니다.');
-      return;
-    }
-    if (!gameData.readyForNextLevel.includes(socket.id)) {
-      gameData.readyForNextLevel.push(socket.id);
-    }
-    io.emit('status', `${players.find(p => p.id === socket.id)?.name} 님 다음 레벨 준비 완료`);
-    if (allPlayersReady()) {
+    // 성공 판단 - 모든 카드가 비었으면 성공
+    let allEmpty = players.every(p => gameData.playerCards[p.id].length === 0);
+
+    if (allEmpty) {
+      io.emit('status', `레벨 ${gameData.level} 성공! 다음 레벨로 넘어갑니다.`);
+
+      // 레벨 보너스 지급
+      if ([2,5,8].includes(gameData.level)) gameData.shuriken++;
+      if ([3,6,9].includes(gameData.level)) gameData.lives++;
+
+      // 레벨 증가
       gameData.level++;
+
+      // 클리어 체크
       if (checkGameClear()) {
-        io.emit('status', '축하합니다! 신이 되셨습니다! 🎉');
+        io.emit('gameClear', '축하합니다! 신이 되셨습니다! 🎉');
         gameData.started = false;
         resetGameData();
         io.emit('gameReset');
         return;
       }
-      updateLivesShurikenByLevel();
+
       dealCards();
-      resetPlayerReady();
       io.emit('gameStarted', gameData);
-      io.emit('status', `레벨 ${gameData.level} 시작! 생명: ${gameData.lives}, 수리검: ${gameData.shuriken}`);
     }
   });
 
@@ -235,28 +236,25 @@ io.on('connection', (socket) => {
     gameData.shurikenVotes[socket.id] = vote;
     io.emit('shurikenVotesUpdate', gameData.shurikenVotes);
 
-    if (allShurikenVoteDecided()) {
-      if (allShurikenVoteAccepted()) {
+    if (Object.keys(gameData.shurikenVotes).length === players.length) {
+      const allAccept = Object.values(gameData.shurikenVotes).every(v => v === 'accept');
+      if (allAccept) {
         gameData.shuriken--;
-        // 각 플레이어가 가장 작은 카드 공개 (내림차순)
+
+        // 가장 작은 카드 공개 및 제거
         let smallestCards = [];
         for (const p of players) {
           let cards = gameData.playerCards[p.id];
           if (cards.length > 0) {
             smallestCards.push({playerId: p.id, card: cards[0]});
-            // 카드 제거
             gameData.playerCards[p.id].shift();
           }
         }
         smallestCards.sort((a,b) => a.card - b.card);
-        for (const c of smallestCards) {
-          gameData.playedCards.push({playerId: c.playerId, card: c.card});
-        }
-        io.emit('shurikenUsed', {shuriken: gameData.shuriken, revealedCards: smallestCards});
-        // 수리검 투표 초기화
-        resetShurikenVotes();
+        gameData.playedCards.push(...smallestCards);
 
-        // 생명 체크 안함(필요시 여기에 추가 가능)
+        io.emit('shurikenUsed', {shuriken: gameData.shuriken, revealedCards: smallestCards});
+        resetShurikenVotes();
       } else {
         io.emit('status', '수리검 요청이 거부되었습니다.');
         resetShurikenVotes();
@@ -276,16 +274,25 @@ io.on('connection', (socket) => {
     players = players.filter(p => p.id !== socket.id);
     io.emit('playersUpdate', players);
 
-    // 플레이어가 사라지면 게임 초기화
     if (players.length < 2 && gameData.started) {
-      io.emit('status', '플레이어가 너무 적어 게임이 종료됩니다.');
+      io.emit('status', '플레이어가 부족하여 게임이 중단됩니다.');
       gameData.started = false;
       resetGameData();
       io.emit('gameReset');
     }
   });
+
+  socket.on('gameResetRequest', () => {
+    if (gameData.started) {
+      io.emit('status', '게임이 이미 진행 중입니다.');
+      return;
+    }
+    resetGameData();
+    io.emit('gameReset');
+    io.emit('status', '게임이 초기화되었습니다. 참가하세요!');
+  });
 });
 
 http.listen(PORT, () => {
-  console.log(`서버 실행 중: http://localhost:${PORT}`);
+  console.log(`서버 실행중: http://localhost:${PORT}`);
 });
