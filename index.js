@@ -12,6 +12,10 @@ let shuriken = 1;
 let level = 1;
 let lastPlayed = 0;
 
+function createDeck() {
+  return Array.from({ length: 100 }, (_, i) => i + 1);
+}
+
 io.on('connection', (socket) => {
   console.log('접속됨:', socket.id);
 
@@ -29,7 +33,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('start', () => {
-    const deck = Array.from({ length: 100 }, (_, i) => i + 1);
+    const deck = createDeck();
     shuffle(deck);
 
     lives = 3;
@@ -39,7 +43,10 @@ io.on('connection', (socket) => {
 
     hands = {};
     players.forEach(p => {
-      hands[p.id] = [deck.pop()];
+      hands[p.id] = [];
+      for(let i=0; i<level; i++) {
+        hands[p.id].push(deck.pop());
+      }
       io.to(p.id).emit('hand', hands[p.id]);
     });
 
@@ -56,7 +63,19 @@ io.on('connection', (socket) => {
 
     const player = players.find(p => p.id === socket.id);
     io.emit('played', { by: player ? player.name : socket.id.slice(0,5), card });
+
+    // 플레이어 카드에서 방금 낸 카드 제거
+    if (hands[socket.id]) {
+      hands[socket.id] = hands[socket.id].filter(c => c !== card);
+    }
+
     io.emit('update-resources', { lives, shuriken, level });
+
+    // 모든 플레이어 카드가 다 없어졌으면 게임 종료 알림
+    const allCardsEmpty = Object.values(hands).every(cards => cards.length === 0);
+    if (allCardsEmpty) {
+      io.emit('game-over', '모든 플레이어가 카드를 다 냈습니다! 게임 종료!');
+    }
   });
 
   socket.on('use-shuriken', () => {
@@ -82,6 +101,26 @@ io.on('connection', (socket) => {
     io.emit('shuriken-used', globalMin);
     io.emit('update-resources', { lives, shuriken, level });
   });
+
+  socket.on('next-level', () => {
+    level++;
+    lastPlayed = 0;
+
+    const deck = createDeck();
+    shuffle(deck);
+
+    hands = {};
+    players.forEach(p => {
+      hands[p.id] = [];
+      for(let i=0; i<level; i++) {
+        hands[p.id].push(deck.pop());
+      }
+      io.to(p.id).emit('hand', hands[p.id]);
+    });
+
+    io.emit('update-resources', { lives, shuriken, level });
+    io.emit('status', `레벨 ${level} 시작!`);
+  });
 });
 
 function shuffle(arr) {
@@ -91,6 +130,7 @@ function shuffle(arr) {
   }
 }
 
-http.listen(3000, () => {
-  console.log('서버 실행 중: http://localhost:3000');
+const PORT = process.env.PORT || 3000;
+http.listen(PORT, () => {
+  console.log(`서버 실행 중: http://localhost:${PORT}`);
 });
