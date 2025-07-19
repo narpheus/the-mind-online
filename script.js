@@ -50,7 +50,7 @@ socket.on('hand', (cards) => {
 function renderCards() {
   const container = document.getElementById('cards');
   container.innerHTML = '';
-  hand.forEach((card, index) => {
+  hand.forEach((card) => {
     const div = document.createElement('div');
     div.className = 'card';
     div.innerText = card;
@@ -63,15 +63,23 @@ function renderCards() {
   });
 }
 
+// 플레이된 카드 오름차순 정렬 후 다시 렌더링
+function renderPlayedCards() {
+  const playedContainer = document.getElementById('playedCards');
+  playedContainer.innerHTML = '';
+  played.sort((a, b) => a - b);
+  played.forEach(card => {
+    const cardDiv = document.createElement('div');
+    cardDiv.className = 'card';
+    cardDiv.innerText = card;
+    playedContainer.appendChild(cardDiv);
+  });
+}
+
 socket.on('played', (data) => {
   played.push(data.card);
+  renderPlayedCards();
   document.getElementById('status').innerText = `${data.by}님이 ${data.card} 카드를 냈습니다.`;
-
-  const playedContainer = document.getElementById('playedCards');
-  const cardDiv = document.createElement('div');
-  cardDiv.className = 'card';
-  cardDiv.innerText = data.card;
-  playedContainer.appendChild(cardDiv);
 });
 
 socket.on('update-resources', ({ lives, shuriken, level }) => {
@@ -80,6 +88,10 @@ socket.on('update-resources', ({ lives, shuriken, level }) => {
 
 socket.on('shuriken-used', (minCard) => {
   alert(`🥷 수리검 사용됨! 가장 작은 카드 ${minCard}가 공개됩니다.`);
+
+  // 수리검 사용 시 깔린 카드에 추가하고 정렬
+  played.push(minCard);
+  renderPlayedCards();
 });
 
 socket.on('life-lost', () => {
