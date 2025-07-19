@@ -7,7 +7,6 @@ const nameInput = document.getElementById('nameInput');
 const playersList = document.getElementById('playersList');
 const statusDiv = document.getElementById('status');
 const startBtn = document.getElementById('startBtn');
-const nextLevelBtn = document.getElementById('nextLevelBtn');
 const shurikenBtn = document.getElementById('shurikenBtn');
 const yourCardsDiv = document.getElementById('yourCards');
 const playedCardsDiv = document.getElementById('playedCards');
@@ -48,8 +47,11 @@ socket.on('gameStarted', (data) => {
   levelDisplay.textContent = gameData.level;
   livesDisplay.textContent = gameData.lives;
   shurikenDisplay.textContent = gameData.shuriken;
-  nextLevelBtn.disabled = true;
   renderCards();
+  shurikenVoteDiv.style.display = 'none';
+  hasVotedShuriken = false;
+  startBtn.disabled = true;
+  shurikenBtn.disabled = false;
 });
 
 socket.on('cardPlayed', ({playerId: pId, card}) => {
@@ -70,6 +72,8 @@ socket.on('gameReset', () => {
   statusDiv.textContent = '';
   playerId = null;
   hasVotedShuriken = false;
+  startBtn.disabled = false;
+  shurikenBtn.disabled = true;
 });
 
 socket.on('shurikenVoteStart', () => {
@@ -78,38 +82,23 @@ socket.on('shurikenVoteStart', () => {
 });
 
 socket.on('shurikenVotesUpdate', (votes) => {
-  // 필요시 표시 가능
+  // 투표 현황 표시 가능 (필요시)
 });
 
 socket.on('shurikenUsed', ({shuriken, revealedCards}) => {
+  if (!gameData) return;
   gameData.shuriken = shuriken;
-  // 플레이어 카드에서 공개된 카드 제거
+  // 공개된 카드 플레이어 카드에서 제거
   for (const c of revealedCards) {
     if (gameData.playerCards[c.playerId]) {
       gameData.playerCards[c.playerId] = gameData.playerCards[c.playerId].filter(x => x !== c.card);
     }
   }
-  // 공개 카드 플레이드카드에 추가
   gameData.playedCards.push(...revealedCards);
   renderCards();
   shurikenVoteDiv.style.display = 'none';
   hasVotedShuriken = false;
 });
-
-joinBtn.disabled = false;
-startBtn.onclick = () => {
-  socket.emit('startGame');
-  startBtn.disabled = true;
-};
-
-nextLevelBtn.onclick = () => {
-  socket.emit('nextLevel');
-  nextLevelBtn.disabled = true;
-};
-
-shurikenBtn.onclick = () => {
-  socket.emit('useShuriken');
-};
 
 acceptShurikenBtn.onclick = () => {
   if (hasVotedShuriken) return;
@@ -123,6 +112,10 @@ rejectShurikenBtn.onclick = () => {
   hasVotedShuriken = true;
 };
 
+shurikenBtn.onclick = () => {
+  socket.emit('useShuriken');
+};
+
 emotionsDiv.querySelectorAll('button').forEach(btn => {
   btn.onclick = () => {
     socket.emit('sendEmotion', btn.dataset.emotion);
@@ -130,17 +123,16 @@ emotionsDiv.querySelectorAll('button').forEach(btn => {
 });
 
 socket.on('playerEmotion', ({playerId: pId, emotion}) => {
-  const player = gameData && gameData.playerCards && pId ? pId : null;
-  if (!player) return;
-  // 간단 알림으로 표시 (필요시 UI 개선 가능)
-  statusDiv.textContent = `${playersList.textContent.split(', ')[players.findIndex(p => p.id === pId)] || '누군가'}님이 '${emotion === 'wow' ? '대박' : '아쉽다'}'를 보냈습니다.`;
+  const playersArray = playersList.textContent.replace('참가자: ', '').split(', ');
+  const idx = playersArray.findIndex(name => name === (pId || ''));
+  const playerName = idx >= 0 ? playersArray[idx] : '누군가';
+  statusDiv.textContent = `${playerName}님이 '${emotion === 'wow' ? '대박' : '아쉽다'}'를 보냈습니다.`;
   setTimeout(() => { statusDiv.textContent = ''; }, 3000);
 });
 
 function renderCards() {
   if (!gameData) return;
 
-  // 내 카드 그리기
   yourCardsDiv.innerHTML = '';
   if (gameData.playerCards[playerId]) {
     for (const card of gameData.playerCards[playerId]) {
@@ -154,16 +146,11 @@ function renderCards() {
     }
   }
 
-  // 깔린 카드 그리기
   playedCardsDiv.innerHTML = '';
   for (const pc of gameData.playedCards) {
     const cardDiv = document.createElement('div');
-    cardDiv.className = 'card played';
+    cardDiv.className = 'card';
     cardDiv.textContent = pc.card;
     playedCardsDiv.appendChild(cardDiv);
   }
-
-  // 레벨 완료 체크 (모든 플레이어가 카드 다 내면)
-  const allCardsEmpty = players.every(p => !gameData.playerCards[p.id] || gameData.playerCards[p.id].length === 0);
-  nextLevelBtn.disabled = !allCardsEmpty;
 }
