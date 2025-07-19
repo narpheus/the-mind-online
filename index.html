@@ -1,3 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>The Mind - Online</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 20px;
+    }
+    #playerList, #resources, #status {
+      text-align: center;
+      margin: 10px 0;
+    }
+    #cards, #playedCards {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .card {
+      width: 80px;
+      height: 120px;
+      border: 1px solid #333;
+      line-height: 120px;
+      font-size: 24px;
+      background-color: #eee;
+      cursor: pointer;
+      user-select: none;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
 <body>
   <h1>The Mind - Online</h1>
 
@@ -7,18 +44,22 @@
     <button onclick="joinGame()">참가</button>
   </div>
 
-  <button onclick="startGame()" disabled id="startBtn">Start Game</button>
-  <button onclick="useShuriken()" disabled id="shurikenBtn">Use Shuriken</button>
+  <button onclick="startGame()" disabled id="startBtn">게임 시작</button>
+  <button onclick="useShuriken()" disabled id="shurikenBtn">수리검 사용</button>
+  <button onclick="nextLevel()" style="display:none;" id="nextLevelBtn">다음 레벨</button>
 
   <div id="playerList"></div>
   <div id="resources"></div>
+
+  <h3>내 카드</h3>
   <div id="cards"></div>
 
-  <h3>깔린 카드:</h3>
-  <div id="playedCards" style="display:flex; justify-content:center; flex-wrap:wrap;"></div>
+  <h3>깔린 카드</h3>
+  <div id="playedCards"></div>
 
   <div id="status"></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="script.js"></script>
 </body>
+</html>
