@@ -1,105 +1,144 @@
 const socket = io();
 
-let hand = [];
-let played = [];
-let playerName = null;
+const loginDiv = document.getElementById('login');
+const gameDiv = document.getElementById('game');
+const nameInput = document.getElementById('nameInput');
+const joinBtn = document.getElementById('joinBtn');
+const startBtn = document.getElementById('startBtn');
+const handContainer = document.getElementById('handContainer');
+const playedCards = document.getElementById('playedCards');
+const shurikenReveal = document.getElementById('shurikenReveal');
+const nextLevelBtn = document.getElementById('nextLevelBtn');
+const useShurikenBtn = document.getElementById('useShurikenBtn');
+const voteYes = document.getElementById('voteYes');
+const voteNo = document.getElementById('voteNo');
+const shurikenVote = document.getElementById('shurikenVote');
+const statusText = document.getElementById('status');
+const resultMessage = document.getElementById('resultMessage');
+const emojiBtns = document.querySelectorAll('.emoji');
 
-function joinGame() {
-  const input = document.getElementById('username');
-  if (!input.value.trim()) {
-    alert('이름을 입력해주세요!');
-    return;
-  }
-  playerName = input.value.trim();
-  socket.emit('join', playerName);
+let myHand = [];
 
-  document.getElementById('startBtn').disabled = false;
-  document.getElementById('shurikenBtn').disabled = false;
-  input.disabled = true;
-  input.nextElementSibling.disabled = true; // 참가 버튼 비활성화
-}
+joinBtn.onclick = () => {
+  const name = nameInput.value.trim();
+  if (!name) return;
+  socket.emit('join', name);
+  loginDiv.style.display = 'none';
+  gameDiv.style.display = 'block';
+};
 
-function startGame() {
-  socket.emit('start');
-  document.getElementById('status').innerText = '게임을 시작했습니다!';
-  document.getElementById('nextLevelBtn').style.display = 'none';
-}
-
-function useShuriken() {
-  socket.emit('use-shuriken');
-}
-
-function nextLevel() {
+startBtn.onclick = () => socket.emit('start');
+nextLevelBtn.onclick = () => {
+  nextLevelBtn.style.display = 'none';
+  playedCards.innerHTML = '';
+  shurikenReveal.innerHTML = '';
   socket.emit('next-level');
-  document.getElementById('nextLevelBtn').style.display = 'none';
-  document.getElementById('status').innerText = '다음 레벨로 이동합니다...';
-}
+};
 
-socket.on('playerList', (players) => {
-  const container = document.getElementById('playerList');
-  container.innerHTML = '<b>플레이어들:</b> ' + players.map(p => p.name).join(', ');
+useShurikenBtn.onclick = () => socket.emit('use-shuriken');
+
+voteYes.onclick = () => {
+  shurikenVote.style.display = 'none';
+  socket.emit('shuriken-vote', true);
+};
+voteNo.onclick = () => {
+  shurikenVote.style.display = 'none';
+  socket.emit('shuriken-vote', false);
+};
+
+emojiBtns.forEach(btn => {
+  btn.onclick = () => socket.emit('emoji', btn.textContent);
 });
 
-socket.on('hand', (cards) => {
-  hand = cards;
-  played = [];
-  renderCards();
-  document.getElementById('playedCards').innerHTML = '';
-});
-
-function renderCards() {
-  const container = document.getElementById('cards');
-  container.innerHTML = '';
-  hand.forEach((card) => {
+function renderHand() {
+  handContainer.innerHTML = '';
+  myHand.sort((a, b) => a - b);
+  myHand.forEach(card => {
     const div = document.createElement('div');
     div.className = 'card';
-    div.innerText = card;
+    div.textContent = card;
     div.onclick = () => {
       socket.emit('play', card);
-      div.style.backgroundColor = 'gray';
-      div.onclick = null;
+      myHand = myHand.filter(c => c !== card);
+      renderHand();
     };
-    container.appendChild(div);
+    handContainer.appendChild(div);
   });
 }
 
-// 플레이된 카드 오름차순 정렬 후 다시 렌더링
 function renderPlayedCards() {
-  const playedContainer = document.getElementById('playedCards');
-  playedContainer.innerHTML = '';
-  played.sort((a, b) => a - b);
-  played.forEach(card => {
-    const cardDiv = document.createElement('div');
-    cardDiv.className = 'card';
-    cardDiv.innerText = card;
-    playedContainer.appendChild(cardDiv);
+  const cards = Array.from(playedCards.children)
+    .map(div => parseInt(div.textContent))
+    .sort((a, b) => a - b);
+  playedCards.innerHTML = '';
+  cards.forEach(card => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.textContent = card;
+    playedCards.appendChild(div);
   });
 }
 
-socket.on('played', (data) => {
-  played.push(data.card);
-  renderPlayedCards();
-  document.getElementById('status').innerText = `${data.by}님이 ${data.card} 카드를 냈습니다.`;
+socket.on('hand', (hand) => {
+  myHand = hand;
+  renderHand();
 });
 
 socket.on('update-resources', ({ lives, shuriken, level }) => {
-  document.getElementById('resources').innerText = `❤️ 생명: ${lives}  |  🥷 수리검: ${shuriken}  |  🎯 레벨: ${level}`;
+  document.getElementById('lives').textContent = lives;
+  document.getElementById('shuriken').textContent = shuriken;
+  document.getElementById('level').textContent = level;
 });
 
-socket.on('shuriken-used', (minCard) => {
-  alert(`🥷 수리검 사용됨! 가장 작은 카드 ${minCard}가 공개됩니다.`);
+socket.on('playerList', (players) => {
+  const div = document.getElementById('players');
+  div.innerHTML = '👥 참가자: ' + players.map(p => p.name).join(', ');
+});
 
-  // 수리검 사용 시 깔린 카드에 추가하고 정렬
-  played.push(minCard);
+socket.on('played', ({ card, by }) => {
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.textContent = card;
+  playedCards.appendChild(div);
   renderPlayedCards();
 });
 
 socket.on('life-lost', () => {
-  alert('틀린 순서! 💔 생명이 1개 줄었습니다.');
+  statusText.textContent = '💔 목숨이 하나 줄었습니다!';
+});
+
+socket.on('next-level-ready', () => {
+  nextLevelBtn.style.display = 'inline-block';
 });
 
 socket.on('game-over', (msg) => {
-  alert(msg);
-  document.getElementById('status').innerText = msg;
-  document.getElementById('nextLevelBtn').style.display = 'inline-block';
+  resultMessage.textContent = msg;
+  nextLevelBtn.style.display = 'inline-block';
+});
+
+socket.on('shuriken-vote-request', () => {
+  shurikenVote.style.display = 'inline-block';
+});
+
+socket.on('shuriken-used', (cards) => {
+  cards.forEach(card => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.textContent = card;
+    playedCards.appendChild(div);
+  });
+  renderPlayedCards();
+});
+
+socket.on('status', msg => {
+  statusText.textContent = msg;
+});
+
+socket.on('emoji', ({ from, emoji }) => {
+  const e = document.createElement('div');
+  e.textContent = `${from}: ${emoji}`;
+  statusText.textContent = e.textContent;
+  setTimeout(() => {
+    if (statusText.textContent === e.textContent) statusText.textContent = '';
+  }, 2000);
 });
