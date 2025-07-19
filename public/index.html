@@ -4,7 +4,161 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>The Mind Online</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* 전체 배경, 글자 중앙 정렬 */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #1b1b1b;
+      color: white;
+      text-align: center;
+    }
+
+    /* 제목 및 섹션 타이틀 */
+    h2 {
+      margin-top: 25px;
+      font-weight: 700;
+      font-size: 1.3rem;
+      color: #ddd;
+    }
+
+    /* 카드 컨테이너 - 가로 배치, 줄 바꿈, 가운데 정렬 */
+    .card-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      max-width: 380px;
+      margin: 10px auto;
+    }
+
+    /* 카드 모양 스타일 */
+    .card {
+      background: white;
+      color: black;
+      border-radius: 8px;
+      padding: 12px 18px;
+      font-weight: 700;
+      font-size: 1.5rem;
+      cursor: pointer;
+      min-width: 50px;
+      text-align: center;
+      box-shadow: 1px 1px 6px rgba(0,0,0,0.7);
+      user-select: none;
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      background: #eee;
+      transform: scale(1.1);
+    }
+
+    /* 내 손 카드 - 테두리 강조 */
+    #handContainer .card {
+      border: 3px solid #00bfff;
+    }
+
+    /* 깔린 카드 - 투명도 약간 */
+    #playedCards .card {
+      opacity: 0.9;
+    }
+
+    /* 수리검 공개 카드 - 점선 테두리 */
+    #shurikenReveal .card {
+      border: 3px dashed orange;
+    }
+
+    /* 버튼 스타일 */
+    button {
+      padding: 10px 16px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 6px;
+      background: #444;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      margin: 5px;
+    }
+
+    button:hover {
+      background: #666;
+    }
+
+    /* 리소스 표시 영역 */
+    #resources {
+      margin-bottom: 15px;
+      font-size: 1.4rem;
+    }
+
+    /* 플레이어 목록 */
+    #players {
+      margin: 15px 0;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    /* 컨트롤 버튼 영역 */
+    #controls {
+      margin: 20px 0;
+    }
+
+    /* 수리검 투표 영역 */
+    #shurikenVote {
+      margin: 15px 0;
+      font-size: 1.1rem;
+    }
+
+    /* 감정표현 버튼 */
+    #emojiBtns {
+      margin-top: 20px;
+    }
+
+    #emojiBtns button {
+      background: transparent;
+      border: none;
+      font-size: 1.8rem;
+      cursor: pointer;
+      margin: 0 6px;
+    }
+
+    /* 상태 메시지 */
+    #status {
+      margin-top: 15px;
+      font-size: 1.1rem;
+      min-height: 24px;
+    }
+
+    /* 결과 메시지 */
+    #resultMessage {
+      margin-top: 20px;
+      font-size: 2rem;
+      color: gold;
+      font-weight: 900;
+    }
+
+    /* 모바일 대응 */
+    @media (max-width: 400px) {
+      .card-container {
+        max-width: 100%;
+        gap: 6px;
+      }
+      .card {
+        min-width: 36px;
+        padding: 8px 14px;
+        font-size: 1.2rem;
+      }
+      input#nameInput {
+        width: 140px;
+        font-size: 1rem;
+      }
+      button {
+        font-size: 1rem;
+        padding: 6px 10px;
+      }
+    }
+  </style>
 </head>
 <body>
   <div id="login">
@@ -23,8 +177,10 @@
 
     <div id="players"></div>
 
+    <h2>깔린 카드</h2>
     <div id="playedCards" class="card-container"></div>
 
+    <h2>내 손 카드</h2>
     <div id="handContainer" class="card-container"></div>
 
     <div id="shurikenReveal" class="card-container"></div>
