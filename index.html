@@ -1,20 +1,29 @@
-
 <!DOCTYPE html>
 <html>
 <head>
   <title>The Mind - Online</title>
   <style>
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #000000;
+      --card-bg: #eee;
+      --card-hover: #ddd;
+      --border-color: #333;
+    }
+
     body {
       font-family: sans-serif;
       text-align: center;
       margin: 20px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
     }
+
     #playerList, #resources, #status {
       text-align: center;
       margin: 10px 0;
     }
 
-    /* 카드 컨테이너: 가로 정렬 + 줄바꿈 */
     #cards, #playedCards {
       display: flex;
       flex-wrap: wrap;
@@ -23,22 +32,22 @@
       margin-top: 20px;
     }
 
-    /* 카드 디자인 */
     .card {
       width: 50px;
       height: 70px;
-      border: 1px solid #333;
+      border: 1px solid var(--border-color);
       line-height: 70px;
       font-size: 18px;
-      background-color: #eee;
+      background-color: var(--card-bg);
       cursor: pointer;
       user-select: none;
       border-radius: 6px;
       box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
       transition: background-color 0.2s ease;
     }
+
     .card:hover {
-      background-color: #ddd;
+      background-color: var(--card-hover);
     }
 
     button:disabled {
@@ -63,6 +72,7 @@
     <label for="username">이름:</label>
     <input id="username" placeholder="이름을 입력하세요" />
     <button onclick="joinGame()">참가</button>
+    <button onclick="toggleTheme()" style="margin-left: 10px;">🌗 테마 전환</button>
   </div>
 
   <button onclick="startGame()" disabled id="startBtn">게임 시작</button>
@@ -83,6 +93,25 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="script.js"></script>
+  <script>
+    let isDark = false;
+
+    function toggleTheme() {
+      isDark = !isDark;
+      if (isDark) {
+        document.documentElement.style.setProperty('--bg-color', '#121212');
+        document.documentElement.style.setProperty('--text-color', '#ffffff');
+        document.documentElement.style.setProperty('--card-bg', '#333');
+        document.documentElement.style.setProperty('--card-hover', '#444');
+        document.documentElement.style.setProperty('--border-color', '#aaa');
+      } else {
+        document.documentElement.style.setProperty('--bg-color', '#ffffff');
+        document.documentElement.style.setProperty('--text-color', '#000000');
+        document.documentElement.style.setProperty('--card-bg', '#eee');
+        document.documentElement.style.setProperty('--card-hover', '#ddd');
+        document.documentElement.style.setProperty('--border-color', '#333');
+      }
+    }
+  </script>
 </body>
 </html>
-
