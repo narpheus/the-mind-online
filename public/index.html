@@ -5,116 +5,98 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>The Mind Online</title>
   <style>
-    /* 전체 배경, 글자 중앙 정렬 */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       padding: 20px;
-      background: #1b1b1b;
-      color: white;
+      background: #fff;
+      color: #222;
       text-align: center;
     }
-
-    /* 제목 및 섹션 타이틀 */
     h2 {
       margin-top: 25px;
       font-weight: 700;
       font-size: 1.3rem;
-      color: #ddd;
+      color: #444;
     }
-
-    /* 카드 컨테이너 - 가로 배치, 줄 바꿈, 가운데 정렬 */
     .card-container {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 8px;
-      max-width: 380px;
+      gap: 12px;
+      max-width: 400px;
       margin: 10px auto;
     }
-
-    /* 카드 모양 스타일 */
     .card {
-      background: white;
-      color: black;
-      border-radius: 8px;
-      padding: 12px 18px;
+      background: #f0f0f0;
+      color: #222;
+      border-radius: 24px;
+      padding: 24px 18px;
       font-weight: 700;
-      font-size: 1.5rem;
+      font-size: 2.0rem;
       cursor: pointer;
-      min-width: 50px;
+      min-width: 60px;
+      min-height: 90px;
+      line-height: 1;
       text-align: center;
-      box-shadow: 1px 1px 6px rgba(0,0,0,0.7);
+      box-shadow: 1px 2px 5px rgba(0,0,0,0.15);
       user-select: none;
-      transition: transform 0.2s ease;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-
     .card:hover {
-      background: #eee;
+      background: #e0e0e0;
       transform: scale(1.1);
+      box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
     }
-
-    /* 내 손 카드 - 테두리 강조 */
     #handContainer .card {
-      border: 3px solid #00bfff;
+      border: 3px solid #007bff;
     }
-
-    /* 깔린 카드 - 투명도 약간 */
     #playedCards .card {
       opacity: 0.9;
     }
-
-    /* 수리검 공개 카드 - 점선 테두리 */
     #shurikenReveal .card {
-      border: 3px dashed orange;
+      border: 3px dashed #ff6600;
+      background: #fff7e6;
     }
-
-    /* 버튼 스타일 */
     button {
-      padding: 10px 16px;
+      padding: 10px 18px;
       font-size: 1.1rem;
       border: none;
       border-radius: 6px;
-      background: #444;
+      background: #007bff;
       color: white;
       cursor: pointer;
       transition: background 0.3s ease;
       margin: 5px;
+      user-select: none;
     }
-
     button:hover {
-      background: #666;
+      background: #0056b3;
     }
-
-    /* 리소스 표시 영역 */
     #resources {
       margin-bottom: 15px;
       font-size: 1.4rem;
     }
-
-    /* 플레이어 목록 */
     #players {
       margin: 15px 0;
-      font-weight: bold;
+      font-weight: 600;
       font-size: 1.1rem;
+      color: #444;
     }
-
-    /* 컨트롤 버튼 영역 */
     #controls {
       margin: 20px 0;
     }
-
-    /* 수리검 투표 영역 */
     #shurikenVote {
       margin: 15px 0;
       font-size: 1.1rem;
+      color: #333;
     }
-
-    /* 감정표현 버튼 */
     #emojiBtns {
       margin-top: 20px;
     }
-
     #emojiBtns button {
       background: transparent;
       border: none;
@@ -122,32 +104,28 @@
       cursor: pointer;
       margin: 0 6px;
     }
-
-    /* 상태 메시지 */
     #status {
       margin-top: 15px;
       font-size: 1.1rem;
       min-height: 24px;
+      color: #444;
     }
-
-    /* 결과 메시지 */
     #resultMessage {
       margin-top: 20px;
       font-size: 2rem;
-      color: gold;
+      color: #e67e22;
       font-weight: 900;
     }
-
-    /* 모바일 대응 */
-    @media (max-width: 400px) {
+    @media (max-width: 420px) {
       .card-container {
         max-width: 100%;
-        gap: 6px;
+        gap: 8px;
       }
       .card {
-        min-width: 36px;
-        padding: 8px 14px;
-        font-size: 1.2rem;
+        min-width: 48px;
+        min-height: 72px;
+        padding: 18px 12px;
+        font-size: 1.6rem;
       }
       input#nameInput {
         width: 140px;
@@ -155,7 +133,7 @@
       }
       button {
         font-size: 1rem;
-        padding: 6px 10px;
+        padding: 8px 14px;
       }
     }
   </style>
