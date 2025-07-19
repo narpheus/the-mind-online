@@ -1,11 +1,8 @@
-// script.js
 const socket = io();
 
 let hand = [];
 let played = [];
 let playerName = null;
-let shurikenVotes = new Set();
-let allPlayers = [];
 
 function joinGame() {
   const input = document.getElementById('username');
@@ -35,13 +32,17 @@ function requestShuriken() {
 function nextLevel() {
   socket.emit('next-level');
   document.getElementById('nextLevelBtn').style.display = 'none';
-  document.getElementById('status').innerText = '다음 레벨로 이동합니다...';
+  document.getElementById('status').innerText = '다음 레벨로 이동 중...';
 }
 
 socket.on('playerList', (players) => {
-  allPlayers = players;
   const container = document.getElementById('playerList');
   container.innerHTML = '<b>플레이어들:</b> ' + players.map(p => p.name).join(', ');
+});
+
+socket.on('player-card-counts', (counts) => {
+  const container = document.getElementById('playerCardsCount');
+  container.innerHTML = counts.map(c => `${c.name}: ${c.count}장`).join(' | ');
 });
 
 socket.on('hand', (cards) => {
@@ -54,7 +55,6 @@ socket.on('hand', (cards) => {
 function renderCards() {
   const container = document.getElementById('cards');
   container.innerHTML = '';
-  hand.sort((a, b) => a - b);
   hand.forEach((card) => {
     const div = document.createElement('div');
     div.className = 'card';
@@ -91,13 +91,9 @@ socket.on('update-resources', ({ lives, shuriken, level }) => {
 });
 
 socket.on('shuriken-used', (minCards) => {
-  minCards.forEach(card => {
-    played.push(card);
-  });
+  minCards.forEach(card => played.push(card));
   renderPlayedCards();
-  hand = hand.filter(c => !minCards.includes(c));
-  renderCards();
-  document.getElementById('status').innerText = '🥷 수리검이 사용되어 가장 작은 카드들이 공개되었습니다!';
+  document.getElementById('status').innerText = `🥷 수리검이 사용되어 ${minCards.join(', ')} 카드가 공개되었습니다.`;
 });
 
 socket.on('life-lost', () => {
@@ -110,12 +106,19 @@ socket.on('game-over', (msg) => {
   document.getElementById('nextLevelBtn').style.display = 'inline-block';
 });
 
-socket.on('shuriken-requested', (voters) => {
-  document.getElementById('status').innerText = `🥷 수리검 요청 중... (${voters.length}/${allPlayers.length} 동의)`;
+socket.on('game-won', () => {
+  document.getElementById('status').innerText = '🎉 신이 되었습니다! 게임 클리어!!';
+  document.getElementById('nextLevelBtn').style.display = 'inline-block';
 });
 
-socket.on('game-won', () => {
-  alert('🎉 모든 레벨을 통과했습니다! 당신은 신이 되었습니다!');
-  document.getElementById('status').innerText = '🎉 모든 레벨을 통과했습니다! 당신은 신이 되었습니다!';
-  document.getElementById('nextLevelBtn').style.display = 'inline-block';
+socket.on('shuriken-requested', (votes) => {
+  document.getElementById('status').innerText = `🥷 수리검 요청 중... (${votes.length}명 동의)`;
+});
+
+socket.on('next-level-status', ({ count, total }) => {
+  document.getElementById('status').innerText = `🎯 다음 레벨 투표 중... (${count}/${total})`;
+});
+
+socket.on('status', (msg) => {
+  document.getElementById('status').innerText = msg;
 });
