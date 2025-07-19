@@ -11,9 +11,34 @@ let lives = 3;
 let shuriken = 1;
 let level = 1;
 let lastPlayed = 0;
+let shurikenVotes = new Set();
 
 function createDeck() {
   return Array.from({ length: 100 }, (_, i) => i + 1);
+}
+
+function updateResources() {
+  io.emit('update-resources', { lives, shuriken, level });
+}
+
+function applyRewards() {
+  const rewardMap = {
+    2: 'shuriken',
+    3: 'life',
+    5: 'shuriken',
+    6: 'life',
+    8: 'shuriken',
+    9: 'life',
+  };
+  const reward = rewardMap[level];
+  if (reward === 'life') lives++;
+  if (reward === 'shuriken') shuriken++;
+}
+
+function checkGameClear() {
+  const playerCount = players.length;
+  const levelClear = { 2: 12, 3: 10, 4: 8 };
+  return level >= levelClear[playerCount];
 }
 
 io.on('connection', (socket) => {
@@ -21,7 +46,9 @@ io.on('connection', (socket) => {
 
   socket.on('join', (name) => {
     players.push({ id: socket.id, name });
+    lives = players.length;
     io.emit('playerList', players);
+    updateResources();
     console.log('플레이어 참가:', name);
   });
 
@@ -29,6 +56,7 @@ io.on('connection', (socket) => {
     players = players.filter(p => p.id !== socket.id);
     delete hands[socket.id];
     io.emit('playerList', players);
+    updateResources();
     console.log('퇴장:', socket.id);
   });
 
@@ -36,75 +64,75 @@ io.on('connection', (socket) => {
     const deck = createDeck();
     shuffle(deck);
 
-    lives = 3;
-    shuriken = 1;
     level = 1;
     lastPlayed = 0;
+    shurikenVotes.clear();
 
     hands = {};
     players.forEach(p => {
       hands[p.id] = [];
-      for(let i=0; i<level; i++) {
+      for (let i = 0; i < level; i++) {
         hands[p.id].push(deck.pop());
       }
       io.to(p.id).emit('hand', hands[p.id]);
     });
 
-    io.emit('update-resources', { lives, shuriken, level });
+    updateResources();
+    io.emit('status', `레벨 ${level} 시작!`);
   });
 
   socket.on('play', (card) => {
     if (card < lastPlayed) {
       lives -= 1;
       io.emit('life-lost');
+      if (lives <= 0) {
+        io.emit('game-over', '💀 생명이 모두 소진되었습니다. 신이 되지 못했습니다!');
+        return;
+      }
     } else {
       lastPlayed = card;
     }
 
     const player = players.find(p => p.id === socket.id);
-    io.emit('played', { by: player ? player.name : socket.id.slice(0,5), card });
+    io.emit('played', { by: player ? player.name : socket.id.slice(0, 5), card });
+    hands[socket.id] = hands[socket.id].filter(c => c !== card);
+    updateResources();
 
-    // 플레이어 카드에서 방금 낸 카드 제거
-    if (hands[socket.id]) {
-      hands[socket.id] = hands[socket.id].filter(c => c !== card);
-    }
-
-    io.emit('update-resources', { lives, shuriken, level });
-
-    // 모든 플레이어 카드가 다 없어졌으면 게임 종료 알림
     const allCardsEmpty = Object.values(hands).every(cards => cards.length === 0);
     if (allCardsEmpty) {
-      io.emit('game-over', '모든 플레이어가 카드를 다 냈습니다! 게임 종료!');
+      if (checkGameClear()) {
+        io.emit('game-over', '🌟 모든 레벨을 클리어했습니다! 신이 되었습니다!');
+        return;
+      }
+      io.emit('game-over', '🎉 모든 플레이어가 카드를 다 냈습니다! 다음 레벨로!');
     }
   });
 
-  socket.on('use-shuriken', () => {
-    if (shuriken <= 0) return;
-    shuriken -= 1;
+  socket.on('vote-shuriken', () => {
+    shurikenVotes.add(socket.id);
+    if (shurikenVotes.size === players.length && shuriken > 0) {
+      shuriken--;
+      let revealedCards = [];
 
-    let minCards = [];
-    players.forEach(p => {
-      if (hands[p.id] && hands[p.id].length > 0) {
-        minCards.push({ id: p.id, card: Math.min(...hands[p.id]) });
-      }
-    });
+      players.forEach(p => {
+        if (hands[p.id] && hands[p.id].length > 0) {
+          const minCard = Math.min(...hands[p.id]);
+          hands[p.id] = hands[p.id].filter(c => c !== minCard);
+          revealedCards.push(minCard);
+        }
+      });
 
-    const globalMin = Math.min(...minCards.map(x => x.card));
-
-    // 공개하고 손에서 제거
-    for (let obj of minCards) {
-      if (obj.card === globalMin) {
-        hands[obj.id] = hands[obj.id].filter(c => c !== obj.card);
-      }
+      revealedCards.sort((a, b) => a - b);
+      io.emit('shuriken-used', revealedCards);
+      updateResources();
     }
-
-    io.emit('shuriken-used', globalMin);
-    io.emit('update-resources', { lives, shuriken, level });
   });
 
   socket.on('next-level', () => {
     level++;
     lastPlayed = 0;
+    shurikenVotes.clear();
+    applyRewards();
 
     const deck = createDeck();
     shuffle(deck);
@@ -112,20 +140,20 @@ io.on('connection', (socket) => {
     hands = {};
     players.forEach(p => {
       hands[p.id] = [];
-      for(let i=0; i<level; i++) {
+      for (let i = 0; i < level; i++) {
         hands[p.id].push(deck.pop());
       }
       io.to(p.id).emit('hand', hands[p.id]);
     });
 
-    io.emit('update-resources', { lives, shuriken, level });
+    updateResources();
     io.emit('status', `레벨 ${level} 시작!`);
   });
 });
 
 function shuffle(arr) {
-  for (let i = arr.length -1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i+1));
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
 }
