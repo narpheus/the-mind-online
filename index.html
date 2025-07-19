@@ -97,7 +97,7 @@
 
     <div>
       <button onclick="startGame()" disabled id="startBtn">게임 시작</button>
-      <button onclick="useShuriken()" disabled id="shurikenBtn">수리검 사용</button>
+      <button onclick="requestShuriken()" disabled id="shurikenBtn">수리검 요청</button>
       <button onclick="nextLevel()" style="display:none;" id="nextLevelBtn">다음 레벨</button>
     </div>
   </div>
@@ -107,6 +107,7 @@
   </div>
 
   <div id="playerList"></div>
+  <div id="playerCardsCount" style="margin-bottom: 10px;"></div>
   <div id="resources"></div>
 
   <h3>내 카드</h3>
