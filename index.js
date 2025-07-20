@@ -77,6 +77,7 @@ function resetGameState() {
   levelClearPending = false;
   lives = players.length;
   updateResources();
+  updatePlayerCardCounts();
 }
 
 io.on('connection', (socket) => {
