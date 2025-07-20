@@ -38,7 +38,6 @@ function updatePlayerCardCounts() {
 
 function applyRewards() {
   const rewardMap = {
-    3: 'shuriken',
     4: 'life',
     6: 'shuriken',
     7: 'life',
@@ -239,6 +238,11 @@ io.on('connection', (socket) => {
       io.emit('status', `레벨 ${level} 시작!`);
       updateResources();
     }
+  });
+
+  socket.on('force-reset', () => {
+    resetGameState();
+    io.emit('status', '🔄 게임이 강제로 초기화되었습니다!');
   });
 });
 
