@@ -38,6 +38,7 @@ function updatePlayerCardCounts() {
 
 function applyRewards() {
   const rewardMap = {
+    3: 'shuriken',
     4: 'life',
     6: 'shuriken',
     7: 'life',
