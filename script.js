@@ -91,7 +91,20 @@ socket.on('update-resources', ({ lives, shuriken, level }) => {
 });
 
 socket.on('shuriken-used', (minCards) => {
-  minCards.forEach(card => played.push(card));
+  minCards.forEach(card => {
+    played.push(card);
+
+    // 내 카드 중 해당 카드 비활성화 + 회색 처리
+    const cardElements = document.querySelectorAll('#cards .card');
+    cardElements.forEach((el) => {
+      if (parseInt(el.innerText) === card && el.style.backgroundColor !== 'gray') {
+        el.style.backgroundColor = 'gray';
+        el.style.opacity = '0.6';
+        el.onclick = null;
+      }
+    });
+  });
+
   renderPlayedCards();
   document.getElementById('status').innerText = `🥷 수리검이 사용되어 ${minCards.join(', ')} 카드가 공개되었습니다.`;
 });
