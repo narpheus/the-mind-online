@@ -3,6 +3,7 @@ const socket = io();
 let hand = [];
 let played = [];
 let playerName = null;
+let isDark = false;
 
 function joinGame() {
   const input = document.getElementById('username');
@@ -12,11 +13,10 @@ function joinGame() {
   }
   playerName = input.value.trim();
   socket.emit('join', playerName);
-
-  document.getElementById('startBtn').disabled = false;
-  document.getElementById('shurikenBtn').disabled = false;
   input.disabled = true;
   input.nextElementSibling.disabled = true;
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('shurikenBtn').disabled = false;
 }
 
 function startGame() {
@@ -35,35 +35,50 @@ function nextLevel() {
   document.getElementById('status').innerText = '다음 레벨로 이동 중...';
 }
 
-socket.on('playerList', (players) => {
-  const container = document.getElementById('playerList');
-  container.innerHTML = '<b>플레이어들:</b> ' + players.map(p => p.name).join(', ');
-});
+function confirmReset() {
+  if (confirm('정말로 게임을 초기화하시겠습니까? 모든 레벨과 카드가 초기화됩니다.')) {
+    socket.emit('force-reset');
+  }
+}
 
-socket.on('player-card-counts', (counts) => {
-  const container = document.getElementById('playerCardsCount');
-  container.innerHTML = counts.map(c => `${c.name}: ${c.count}장`).join(' | ');
-});
-
-socket.on('hand', (cards) => {
-  hand = cards;
-  played = [];
-  renderCards();
-  document.getElementById('playedCards').innerHTML = '';
-});
+function toggleTheme() {
+  isDark = !isDark;
+  if (isDark) {
+    document.documentElement.style.setProperty('--bg-color', '#121212');
+    document.documentElement.style.setProperty('--text-color', '#ffffff');
+    document.documentElement.style.setProperty('--card-bg', '#333');
+    document.documentElement.style.setProperty('--card-hover', '#444');
+    document.documentElement.style.setProperty('--border-color', '#aaa');
+  } else {
+    document.documentElement.style.setProperty('--bg-color', '#ffffff');
+    document.documentElement.style.setProperty('--text-color', '#000000');
+    document.documentElement.style.setProperty('--card-bg', '#eee');
+    document.documentElement.style.setProperty('--card-hover', '#ddd');
+    document.documentElement.style.setProperty('--border-color', '#333');
+  }
+}
 
 function renderCards() {
   const container = document.getElementById('cards');
   container.innerHTML = '';
-  hand.forEach((card) => {
+
+  hand.forEach(cardObj => {
     const div = document.createElement('div');
     div.className = 'card';
-    div.innerText = card;
-    div.onclick = () => {
-      socket.emit('play', card);
+    div.innerText = cardObj.value;
+
+    if (cardObj.used) {
       div.style.backgroundColor = 'gray';
+      div.style.opacity = '0.6';
       div.onclick = null;
-    };
+    } else {
+      div.onclick = () => {
+        socket.emit('play', cardObj.value);
+        div.style.backgroundColor = 'gray';
+        div.onclick = null;
+      };
+    }
+
     container.appendChild(div);
   });
 }
@@ -80,10 +95,27 @@ function renderPlayedCards() {
   });
 }
 
+socket.on('hand', (cards) => {
+  // 숫자 배열을 객체 배열로 변환, used는 false로 초기화
+  hand = cards.map(c => ({ value: c, used: false }));
+  played = [];
+  renderCards();
+  document.getElementById('playedCards').innerHTML = '';
+});
+
 socket.on('played', (data) => {
   played.push(data.card);
   renderPlayedCards();
   document.getElementById('status').innerText = `${data.by}님이 ${data.card} 카드를 냈습니다.`;
+});
+
+socket.on('playerList', (players) => {
+  document.getElementById('playerList').innerHTML = '<b>플레이어:</b> ' + players.map(p => p.name).join(', ');
+});
+
+socket.on('player-card-counts', (counts) => {
+  document.getElementById('playerCardsCount').innerText =
+    counts.map(c => `${c.name}: ${c.count}장`).join(' | ');
 });
 
 socket.on('update-resources', ({ lives, shuriken, level }) => {
@@ -93,18 +125,13 @@ socket.on('update-resources', ({ lives, shuriken, level }) => {
 socket.on('shuriken-used', (minCards) => {
   minCards.forEach(card => {
     played.push(card);
-
-    // 내 카드 중 해당 카드 비활성화 + 회색 처리
-    const cardElements = document.querySelectorAll('#cards .card');
-    cardElements.forEach((el) => {
-      if (parseInt(el.innerText) === card && el.style.backgroundColor !== 'gray') {
-        el.style.backgroundColor = 'gray';
-        el.style.opacity = '0.6';
-        el.onclick = null;
-      }
-    });
+    // hand 배열에서 해당 카드 used 표시
+    const index = hand.findIndex(c => c.value === card && c.used === false);
+    if (index !== -1) {
+      hand[index].used = true;
+    }
   });
-
+  renderCards();
   renderPlayedCards();
   document.getElementById('status').innerText = `🥷 수리검이 사용되어 ${minCards.join(', ')} 카드가 공개되었습니다.`;
 });
