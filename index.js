@@ -189,7 +189,13 @@ io.on('connection', (socket) => {
 
       revealedCards.sort((a, b) => a - b);
 
-      io.emit('shuriken-used', revealedCards);
+      let revealed = players.map(p => ({
+  player: p.id,
+  card: hands[p.id]?.length ? Math.min(...hands[p.id]) : null
+})).filter(r => r.card !== null);
+
+io.emit('shuriken-used', revealed);
+
       updateResources();
 
       const allCardsEmpty = Object.values(hands).every(cards => cards.length === 0);
