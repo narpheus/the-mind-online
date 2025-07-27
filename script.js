@@ -124,20 +124,21 @@ socket.on('update-resources', ({ lives, shuriken, level }) => {
 
 
 socket.on('shuriken-used', (revealedCards) => {
-  console.log('[디버그] 수신된 수리검 카드:', revealedCards);
-  console.log('[디버그] 적용 전 hand:', hand.map(c => c.value));
+  console.log('[디버그] 현재 hand:', hand.map(c => c.value));
+  console.log('[디버그] 제거할 카드:', revealedCards);
 
-  revealedCards.forEach(card => {
-    hand = hand.filter(c => c.value !== card);
-    played.push(card);
+  // revealedCards = [숫자, 숫자, ...]
+  revealedCards.forEach(revealed => {
+    // hand에서 해당 숫자를 가진 카드 객체를 제거
+    hand = hand.filter(c => c.value !== revealed);
+    played.push(revealed);
   });
 
-  console.log('[디버그] 적용 후 hand:', hand.map(c => c.value));
   renderCards();
   renderPlayedCards();
-  document.getElementById('status').innerText =
-    `🥷 수리검이 사용되어 ${revealedCards.join(', ')} 카드가 공개되었습니다.`;
+  document.getElementById('status').innerText = `🥷 수리검이 사용되어 ${revealedCards.join(', ')} 카드가 공개되었습니다.`;
 });
+
 
 
 
