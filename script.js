@@ -74,8 +74,8 @@ function renderCards() {
     } else {
       div.onclick = () => {
         socket.emit('play', cardObj.value);
-        div.style.backgroundColor = 'gray';
-        div.onclick = null;
+        cardObj.used = true; // ✅ 카드 상태 업데이트
+        renderCards();        // ✅ 재렌더링
       };
     }
 
@@ -96,7 +96,6 @@ function renderPlayedCards() {
 }
 
 socket.on('hand', (cards) => {
-  // 숫자 배열을 객체 배열로 변환, used는 false로 초기화
   hand = cards.map(c => ({ value: c, used: false }));
   played = [];
   renderCards();
@@ -125,11 +124,11 @@ socket.on('update-resources', ({ lives, shuriken, level }) => {
 socket.on('shuriken-used', (minCards) => {
   minCards.forEach(card => {
     played.push(card);
-    // hand 배열에서 해당 카드 used 표시
-    const index = hand.findIndex(c => c.value === card && c.used === false);
-    if (index !== -1) {
-      hand[index].used = true;
-    }
+    hand.forEach(c => {
+      if (c.value === card && !c.used) {
+        c.used = true;
+      }
+    });
   });
   renderCards();
   renderPlayedCards();
