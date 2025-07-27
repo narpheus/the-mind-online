@@ -13,7 +13,7 @@ let level = 1;
 let lastPlayed = 0;
 let shurikenVotes = new Set();
 let nextLevelVotes = new Set();
-let levelClearPending = false;
+let levelClearPending = false; // 다음 레벨 준비 상태 플래그
 
 function createDeck() {
   return Array.from({ length: 100 }, (_, i) => i + 1);
@@ -48,11 +48,11 @@ function applyRewards() {
   const reward = rewardMap[level];
   if (reward === 'life') {
     lives++;
-    io.emit('status', `🎉 레벨 ${level} 시작! 생명 +1 획득!`);
+    io.emit('status', 🎉 레벨 ${level} 시작! 생명 +1 획득!);
   }
   if (reward === 'shuriken') {
     shuriken++;
-    io.emit('status', `🎉 레벨 ${level} 시작! 수리검 +1 획득!`);
+    io.emit('status', 🎉 레벨 ${level} 시작! 수리검 +1 획득!);
   }
   updateResources();
 }
@@ -129,7 +129,7 @@ io.on('connection', (socket) => {
     lives = players.length;
     shuriken = 1;
     updateResources();
-    io.emit('status', `레벨 ${level} 시작!`);
+    io.emit('status', 레벨 ${level} 시작!);
   });
 
   socket.on('play', (card) => {
@@ -183,11 +183,11 @@ io.on('connection', (socket) => {
         if (hands[p.id] && hands[p.id].length > 0) {
           const minCard = Math.min(...hands[p.id]);
           hands[p.id] = hands[p.id].filter(c => c !== minCard);
-          revealedCards.push({ player: p.id, card: minCard });
+          revealedCards.push(minCard);
         }
       });
 
-      revealedCards.sort((a, b) => a.card - b.card);
+      revealedCards.sort((a, b) => a - b);
 
       io.emit('shuriken-used', revealedCards);
       updateResources();
@@ -206,10 +206,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('next-level', () => {
-    if (!levelClearPending) {
+    if (levelClearPending === false) {
       socket.emit('status', '아직 다음 레벨로 넘어갈 수 없습니다.');
       return;
     }
+
+    if (!players.find(p => p.id === socket.id)) return;
 
     nextLevelVotes.add(socket.id);
     io.emit('next-level-status', { count: nextLevelVotes.size, total: players.length });
@@ -235,7 +237,7 @@ io.on('connection', (socket) => {
         io.to(p.id).emit('hand', hands[p.id]);
       });
 
-      io.emit('status', `레벨 ${level} 시작!`);
+      io.emit('status', 레벨 ${level} 시작!);
       updateResources();
     }
   });
@@ -248,5 +250,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {
-  console.log(`서버 실행 중: http://localhost:${PORT}`);
+  console.log(서버 실행 중: http://localhost:${PORT});
 });
