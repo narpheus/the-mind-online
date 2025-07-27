@@ -48,11 +48,11 @@ function applyRewards() {
   const reward = rewardMap[level];
   if (reward === 'life') {
     lives++;
-    io.emit('status', 🎉 레벨 ${level} 시작! 생명 +1 획득!);
+    io.emit('status', `🎉 레벨 ${level} 시작! 생명 +1 획득!`);
   }
   if (reward === 'shuriken') {
     shuriken++;
-    io.emit('status', 🎉 레벨 ${level} 시작! 수리검 +1 획득!);
+    io.emit('status', `🎉 레벨 ${level} 시작! 수리검 +1 획득!`);
   }
   updateResources();
 }
@@ -129,7 +129,7 @@ io.on('connection', (socket) => {
     lives = players.length;
     shuriken = 1;
     updateResources();
-    io.emit('status', 레벨 ${level} 시작!);
+    io.emit('status', `레벨 ${level} 시작!`);
   });
 
   socket.on('play', (card) => {
@@ -237,7 +237,7 @@ io.on('connection', (socket) => {
         io.to(p.id).emit('hand', hands[p.id]);
       });
 
-      io.emit('status', 레벨 ${level} 시작!);
+      io.emit('status', `레벨 ${level} 시작!`);
       updateResources();
     }
   });
@@ -250,5 +250,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {
-  console.log(서버 실행 중: http://localhost:${PORT});
+  console.log(`서버 실행 중: http://localhost:${PORT}`);
 });
