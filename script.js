@@ -122,17 +122,23 @@ socket.on('update-resources', ({ lives, shuriken, level }) => {
   document.getElementById('resources').innerText = `❤️ 생명: ${lives}  |  🥷 수리검: ${shuriken}  |  🎯 레벨: ${level}`;
 });
 
-// ✅ 이 부분이 수정된 핵심!
+
 socket.on('shuriken-used', (revealedCards) => {
+  console.log('[디버그] 수신된 수리검 카드:', revealedCards);
+  console.log('[디버그] 적용 전 hand:', hand.map(c => c.value));
+
   revealedCards.forEach(card => {
-    // 👇 여기 수정: card.value 가 아니라 숫자 비교
     hand = hand.filter(c => c.value !== card);
     played.push(card);
   });
+
+  console.log('[디버그] 적용 후 hand:', hand.map(c => c.value));
   renderCards();
   renderPlayedCards();
-  document.getElementById('status').innerText = `🥷 수리검이 사용되어 ${revealedCards.join(', ')} 카드가 공개되었습니다.`;
+  document.getElementById('status').innerText =
+    `🥷 수리검이 사용되어 ${revealedCards.join(', ')} 카드가 공개되었습니다.`;
 });
+
 
 
 socket.on('life-lost', () => {
