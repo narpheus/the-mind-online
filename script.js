@@ -106,7 +106,7 @@ socket.on('hand', (cards) => {
 socket.on('played', (data) => {
   played.push(data.card);
   renderPlayedCards();
-  document.getElementById('status').innerText = ${data.by}님이 ${data.card} 카드를 냈습니다.;
+  document.getElementById('status').innerText = `${data.by}님이 ${data.card} 카드를 냈습니다.`;
 });
 
 socket.on('playerList', (players) => {
@@ -115,25 +115,26 @@ socket.on('playerList', (players) => {
 
 socket.on('player-card-counts', (counts) => {
   document.getElementById('playerCardsCount').innerText =
-    counts.map(c => ${c.name}: ${c.count}장).join(' | ');
+    counts.map(c => `${c.name}: ${c.count}장`).join(' | ');
 });
 
 socket.on('update-resources', ({ lives, shuriken, level }) => {
-  document.getElementById('resources').innerText = ❤️ 생명: ${lives}  |  🥷 수리검: ${shuriken}  |  🎯 레벨: ${level};
+  document.getElementById('resources').innerText = `❤️ 생명: ${lives}  |  🥷 수리검: ${shuriken}  |  🎯 레벨: ${level}`;
 });
 
-socket.on('shuriken-used', (revealedCards) => {
-  revealedCards.forEach(card => {
-    // hand 배열에서 해당 카드 완전히 제거
-    hand = hand.filter(c => c.value !== card);
-    // 깔린 카드 배열에 추가
+socket.on('shuriken-used', (minCards) => {
+  minCards.forEach(card => {
     played.push(card);
+    // hand 배열에서 해당 카드 used 표시
+    const index = hand.findIndex(c => c.value === card && c.used === false);
+    if (index !== -1) {
+      hand[index].used = true;
+    }
   });
   renderCards();
   renderPlayedCards();
-  document.getElementById('status').innerText = `🥷 수리검이 사용되어 ${revealedCards.join(', ')} 카드가 공개되었습니다.`;
+  document.getElementById('status').innerText = `🥷 수리검이 사용되어 ${minCards.join(', ')} 카드가 공개되었습니다.`;
 });
-
 
 socket.on('life-lost', () => {
   alert('틀린 순서! 💔 생명이 1개 줄었습니다.');
@@ -151,11 +152,11 @@ socket.on('game-won', () => {
 });
 
 socket.on('shuriken-requested', (votes) => {
-  document.getElementById('status').innerText = 🥷 수리검 요청 중... (${votes.length}명 동의);
+  document.getElementById('status').innerText = `🥷 수리검 요청 중... (${votes.length}명 동의)`;
 });
 
 socket.on('next-level-status', ({ count, total }) => {
-  document.getElementById('status').innerText = 🎯 다음 레벨 투표 중... (${count}/${total});
+  document.getElementById('status').innerText = `🎯 다음 레벨 투표 중... (${count}/${total})`;
 });
 
 socket.on('status', (msg) => {
