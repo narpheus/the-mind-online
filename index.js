@@ -13,7 +13,7 @@ let level = 1;
 let lastPlayed = 0;
 let shurikenVotes = new Set();
 let nextLevelVotes = new Set();
-let levelClearPending = false; // 다음 레벨 준비 상태 플래그
+let levelClearPending = false;
 
 function createDeck() {
   return Array.from({ length: 100 }, (_, i) => i + 1);
@@ -183,19 +183,13 @@ io.on('connection', (socket) => {
         if (hands[p.id] && hands[p.id].length > 0) {
           const minCard = Math.min(...hands[p.id]);
           hands[p.id] = hands[p.id].filter(c => c !== minCard);
-          revealedCards.push(minCard);
+          revealedCards.push({ player: p.id, card: minCard });
         }
       });
 
-      revealedCards.sort((a, b) => a - b);
+      revealedCards.sort((a, b) => a.card - b.card);
 
-      let revealed = players.map(p => ({
-  player: p.id,
-  card: hands[p.id]?.length ? Math.min(...hands[p.id]) : null
-})).filter(r => r.card !== null);
-
-io.emit('shuriken-used', revealed);
-
+      io.emit('shuriken-used', revealedCards);
       updateResources();
 
       const allCardsEmpty = Object.values(hands).every(cards => cards.length === 0);
@@ -212,12 +206,10 @@ io.emit('shuriken-used', revealed);
   });
 
   socket.on('next-level', () => {
-    if (levelClearPending === false) {
+    if (!levelClearPending) {
       socket.emit('status', '아직 다음 레벨로 넘어갈 수 없습니다.');
       return;
     }
-
-    if (!players.find(p => p.id === socket.id)) return;
 
     nextLevelVotes.add(socket.id);
     io.emit('next-level-status', { count: nextLevelVotes.size, total: players.length });
