@@ -74,8 +74,8 @@ function renderCards() {
     } else {
       div.onclick = () => {
         socket.emit('play', cardObj.value);
-        cardObj.used = true; // ✅ 카드 상태 업데이트
-        renderCards();        // ✅ 재렌더링
+        div.style.backgroundColor = 'gray';
+        div.onclick = null;
       };
     }
 
@@ -124,18 +124,14 @@ socket.on('update-resources', ({ lives, shuriken, level }) => {
 socket.on('shuriken-used', (revealed) => {
   revealed.forEach(({ player, card }) => {
     played.push(card);
-
-    // 내 카드라면 used 처리
     if (socket.id === player) {
       const target = hand.find(c => c.value === card && !c.used);
       if (target) target.used = true;
     }
   });
-
   renderCards();
   renderPlayedCards();
-  document.getElementById('status').innerText = 
-    `🥷 수리검이 사용되어 ${revealed.map(r => r.card).join(', ')} 카드가 공개되었습니다.`;
+  document.getElementById('status').innerText = `🥷 수리검이 사용되어 ${revealed.map(r => r.card).join(', ')} 카드가 공개되었습니다.`;
 });
 
 socket.on('life-lost', () => {
