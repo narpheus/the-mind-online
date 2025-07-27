@@ -122,19 +122,18 @@ socket.on('update-resources', ({ lives, shuriken, level }) => {
   document.getElementById('resources').innerText = ❤️ 생명: ${lives}  |  🥷 수리검: ${shuriken}  |  🎯 레벨: ${level};
 });
 
-socket.on('shuriken-used', (minCards) => {
-  minCards.forEach(card => {
+socket.on('shuriken-used', (revealedCards) => {
+  revealedCards.forEach(card => {
+    // hand 배열에서 해당 카드 완전히 제거
+    hand = hand.filter(c => c.value !== card);
+    // 깔린 카드 배열에 추가
     played.push(card);
-    // hand 배열에서 해당 카드 used 표시
-    const index = hand.findIndex(c => c.value === card && c.used === false);
-    if (index !== -1) {
-      hand[index].used = true;
-    }
   });
   renderCards();
   renderPlayedCards();
-  document.getElementById('status').innerText = 🥷 수리검이 사용되어 ${minCards.join(', ')} 카드가 공개되었습니다.;
+  document.getElementById('status').innerText = `🥷 수리검이 사용되어 ${revealedCards.join(', ')} 카드가 공개되었습니다.`;
 });
+
 
 socket.on('life-lost', () => {
   alert('틀린 순서! 💔 생명이 1개 줄었습니다.');
